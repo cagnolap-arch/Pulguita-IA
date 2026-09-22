@@ -14,62 +14,15 @@ jobs:
       - name: Descargar proyecto
         uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Configurar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Instalar dependencias
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip \
-            openjdk-17-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo6 cmake libffi-dev libssl-dev \
-            automake autopoint gettext libltdl-dev
-
-      - name: Instalar Buildozer
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install buildozer cython==0.29.37
-
-      - name: Instalar Android SDK
-        run: |
-          mkdir -p "$HOME/.buildozer/android/platform/android-sdk"
-          cd "$HOME/.buildozer/android/platform/android-sdk"
-
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mkdir -p cmdline-tools/latest
-          mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
-
-          mkdir -p tools/bin
-          ln -sf "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager" \
-            "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
-
-      - name: Instalar componentes Android
-        run: |
-          export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-          export PATH="$ANDROID_HOME/tools/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools"
-
       - name: Compilar APK
-        run: |
-          buildozer android debug
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          workdir: .
 
-      - name: Guardar APK
+      - name: Subir APK
         uses: actions/upload-artifact@v4
         with:
           name: Pulguita-IA-APK
-          path: bin/*.apk
-          if-no-files-found: error
+          path: ${{ steps.buildozer.outputs.filename }}
