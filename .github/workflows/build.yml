@@ -14,15 +14,36 @@ jobs:
       - name: Descargar proyecto
         uses: actions/checkout@v4
 
+      - name: Instalar dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            python3-venv \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            cmake
+
+      - name: Instalar Buildozer
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --upgrade buildozer cython
+
       - name: Compilar APK
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          workdir: .
+        run: |
+          buildozer android debug
 
       - name: Subir APK
         uses: actions/upload-artifact@v4
         with:
           name: Pulguita-IA-APK
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
